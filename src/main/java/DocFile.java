@@ -9,9 +9,9 @@ import org.w3c.dom.ranges.Range;
 import java.awt.font.NumericShaper;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,19 +21,23 @@ import java.util.regex.Pattern;
 public class DocFile {
 
     public static void main(String[] args) {
-        String fileName = "C:\\Users\\Иванка\\Desktop\\(1) Договор поставки.docx";
-        String fileName2 = "C:\\Users\\Иванка\\Desktop\\(1) Договор поставки-201812281438496350.DOCX";
-        String patternFileName = "C:\\Users\\Иванка\\Desktop\\(1) Договор поставки эталон2.docx";
-        String patternFileName3 = "C:\\Users\\Иванка\\Desktop\\(1) Договор поставки эталон3.docx";
-        String docNum = "6-1-021/000433-18";
-//        readFile(fileName);
-//        System.out.println("\n\n\n\n\n\n");
+        String fileName = ".\\(1) Договор поставки.docx";
+        String fileName2 = ".\\(1) Договор поставки-201812281438496350.DOCX";
+        String fileName3 = ".\\(1) Договор поставки-201811161138367851.DOCX";
+        String fileName4 = ".\\(1) Договор поставки-201901091326040782 (1).DOCX";
+        String patternFileName = ".\\(1) Договор поставки эталон2.docx";
+        String patternFileName3 = ".\\(1) Договор поставки эталон3.docx";
+        String patternFileName7 = ".\\(1) Договор поставки эталон7.docx";
+        String patternExistKA = ".\\(1) Договор поставки эталон(существующий КА).docx";
+        String docNum = "6-1-021/000004-19";
+//        String currDate = new SimpleDateFormat("dd MMMM yyyy", new Locale("ru")).format(new Date()) + " г\\.";
 
         StringBuilder standard = readFilePOIFSFileSystem(patternFileName);
-        StringBuilder standard3 = readFilePOIFSFileSystem(patternFileName3);
-        StringBuilder file = readFilePOIFSFileSystem(fileName2);
+//        StringBuilder standard3 = readFilePOIFSFileSystem(patternFileName3);
+        StringBuilder file = readFilePOIFSFileSystem(fileName4);
 
-        Pattern pattern = Pattern.compile(String.format(String.valueOf(standard3), "6-1-021/000730-18", "28 декабря 2018 г."));
+        Pattern pattern = Pattern.compile(String.format(String.valueOf(standard), docNum, "18 января 2019 г\\."));
+        System.out.println(String.format(String.valueOf(standard), docNum, "18 января 2019 г."));
         Matcher matcher = pattern.matcher(file);
         if (matcher.find()) {
             System.out.println("Goooooooooood, we've done it");
@@ -57,7 +61,7 @@ public class DocFile {
     static String docNumber = "\\d-\\d-\\d{3}/\\d{6}-\\d{2}";
 
     public static StringBuilder readFilePOIFSFileSystem(String fileName) {
-        StringBuilder documentText = new StringBuilder();
+//        StringBuilder documentText = new StringBuilder();
         List<XWPFTable> tables = new ArrayList<>();
         StringBuilder allText = new StringBuilder();
         try {
@@ -78,13 +82,34 @@ public class DocFile {
                     XWPFTable table = (XWPFTable) element;
                     allText.append(table.getText());
                     tables.add(table);
-                    System.out.println(table.getText());
+//                    System.out.println(table.getText());
 
                 } else if ("PARAGRAPH".equalsIgnoreCase(element.getElementType().name())) {
                     XWPFParagraph paragraph = (XWPFParagraph) element;
-                    allText.append(paragraph.getText());
-                    documentText.append(paragraph.getText());
-                    System.out.println(paragraph.getText());
+                    if (paragraph.getText().contains("footnoteRef") || paragraph.getText().contains("[1:"))
+                        System.out.println();
+                    Pattern pattern = Pattern.compile("(\\[\\d+:|\\[footnoteRef:\\d+\\])");
+                    Matcher matcher = pattern.matcher(paragraph.getText());
+//                    StringBuffer temp = new StringBuffer();
+                    if (matcher.find()) {
+                        matcher = pattern.matcher(paragraph.getText());
+                        String afterReplace = "";
+                        while (matcher.find()) {
+                            StringBuffer temp = new StringBuffer();
+                            matcher.appendReplacement(temp, "");
+                            matcher.appendTail(temp);
+                            matcher = pattern.matcher(temp);
+                            afterReplace = String.valueOf(temp);
+                        }
+                        allText.append(afterReplace);
+                    } else {
+                        allText.append(paragraph.getText());
+                    }
+
+
+
+//                    documentText.append(paragraph.getText());
+//                    System.out.println(paragraph.getText());
                 }
             }
         } catch (Exception ex) {
@@ -98,6 +123,8 @@ public class DocFile {
 //        }
 //        System.out.println(tables);
 //        System.out.println(documentText);
+        System.out.println(allText);
+        System.out.println("\n\n\n\n\n\n\n");
         return allText;
     }
 
